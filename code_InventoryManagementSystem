@@ -1,0 +1,147 @@
+-- ----------------------------------
+-- Phase 1: Database Creation
+-- ----------------------------------
+CREATE DATABASE InventoryDB;
+USE InventoryDB;
+
+-- ----------------------------------
+-- Phase 2: Table Creation (DDL)
+-- ----------------------------------
+
+-- Supplier Table
+CREATE TABLE Supplier (
+    Supplier_ID INT PRIMARY KEY,
+    Supplier_Name VARCHAR(50) NOT NULL,
+    Contact_Number VARCHAR(15),
+    Email VARCHAR(50) UNIQUE,
+    Address VARCHAR(100)
+);
+
+-- Product Table
+CREATE TABLE Product (
+    Product_ID INT PRIMARY KEY,
+    Product_Name VARCHAR(50) NOT NULL,
+    Category VARCHAR(30),
+    Unit_Price DECIMAL(10,2) CHECK (Unit_Price > 0),
+    Quantity_In_Stock INT CHECK (Quantity_In_Stock >= 0),
+    Supplier_ID INT,
+    FOREIGN KEY (Supplier_ID) REFERENCES Supplier(Supplier_ID)
+);
+
+-- Purchase Table
+CREATE TABLE Purchase (
+    Purchase_ID INT PRIMARY KEY,
+    Product_ID INT,
+    Supplier_ID INT,
+    Purchase_Date DATE,
+    Quantity_Purchased INT CHECK (Quantity_Purchased > 0),
+    Total_Cost DECIMAL(10,2),
+    FOREIGN KEY (Product_ID) REFERENCES Product(Product_ID),
+    FOREIGN KEY (Supplier_ID) REFERENCES Supplier(Supplier_ID)
+);
+
+-- Stock Table
+CREATE TABLE Stock (
+    Stock_ID INT PRIMARY KEY,
+    Product_ID INT UNIQUE,
+    Available_Quantity INT CHECK (Available_Quantity >= 0),
+    Last_Updated_Date DATE,
+    FOREIGN KEY (Product_ID) REFERENCES Product(Product_ID)
+);
+
+-- ----------------------------------
+-- Phase 3: Data Insertion (DML)
+-- ----------------------------------
+
+-- Insert Supplier Data
+INSERT INTO Supplier VALUES 
+(101, 'ABC Traders', '9876543210', 'abc@gmail.com', 'Delhi'),
+(102, 'Global Stationers', '9856123478', 'global@gmail.com', 'Mumbai'),
+(103, 'WriteWell Pvt Ltd', '9823564789', 'writewell@gmail.com', 'Bangalore');
+
+-- Insert Product Data
+INSERT INTO Product VALUES 
+(201, 'Pen', 'Stationery', 10.50, 200, 101),
+(202, 'Notebook', 'Stationery', 50.00, 150, 102),
+(203, 'Marker', 'Office Supplies', 25.75, 80, 101),
+(204, 'Eraser', 'Stationery', 5.00, 300, 103);
+
+-- Insert Purchase Data
+INSERT INTO Purchase VALUES
+(301, 201, 101, '2025-10-20', 50, 525.00),
+(302, 202, 102, '2025-10-21', 70, 3500.00),
+(303, 203, 101, '2025-10-22', 30, 772.50),
+(304, 204, 103, '2025-10-23', 100, 500.00);
+
+-- Insert Stock Data
+INSERT INTO Stock VALUES
+(401, 201, 250, '2025-10-21'),
+(402, 202, 220, '2025-10-22'),
+(403, 203, 110, '2025-10-23'),
+(404, 204, 400, '2025-10-23');
+
+-- ----------------------------------
+-- Phase 4: Queries for Data Retrieval
+-- ----------------------------------
+
+
+-- 1. View all products
+SELECT * FROM Product;
+
+-- 2. Display supplier details
+SELECT * FROM Supplier;
+
+
+
+
+-- 3. Show products with low stock (less than 100)
+SELECT Product_Name, Quantity_In_Stock
+FROM Product
+WHERE Quantity_In_Stock < 100;
+
+
+-- 4. Display total purchase cost per supplier
+SELECT s.Supplier_Name, SUM(p.Total_Cost) AS Total_Purchase
+FROM Purchase p
+JOIN Supplier s ON p.Supplier_ID = s.Supplier_ID
+GROUP BY s.Supplier_Name;
+
+
+-- 5. List products with their suppliers
+SELECT p.Product_Name, s.Supplier_Name, p.Unit_Price
+FROM Product p
+JOIN Supplier s ON p.Supplier_ID = s.Supplier_ID;
+
+
+-- 6. Find total number of products per category
+SELECT Category, COUNT(Product_ID) AS Total_Products
+FROM Product
+GROUP BY Category;
+
+
+-- 7. Show purchase details with product names
+SELECT pch.Purchase_ID, pr.Product_Name, pch.Quantity_Purchased, pch.Total_Cost
+FROM Purchase pch
+JOIN Product pr ON pch.Product_ID = pr.Product_ID;
+
+
+-- 8. View available stock with last updated date
+SELECT pr.Product_Name, st.Available_Quantity, st.Last_Updated_Date
+FROM Product pr
+JOIN Stock st ON pr.Product_ID = st.Product_ID;
+
+
+-- ----------------------------------
+-- Phase 5: Create a View for Stock Summary
+-- ----------------------------------
+CREATE VIEW Stock_Summary AS
+SELECT p.Product_Name, s.Available_Quantity, s.Last_Updated_Date
+FROM Product p
+JOIN Stock s ON p.Product_ID = s.Product_ID;
+
+-- View Data
+SELECT * FROM Stock_Summary;
+
+-- ----------------------------------
+-- End of Project Code
+-- ----------------------------------
